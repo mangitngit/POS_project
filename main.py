@@ -32,15 +32,17 @@ class GreenHouse:
         self.read_data()
         self.read_desired_values()
 
-        self.read_settings_values()
+        self.read_settings()
         self.set_settings_values()
+
+        plt.ion()
 
     def loop(self):
         counter = 0
         while self.running:
             time.sleep(0.1)
-            self.read_settings_values()
-            self.set_automatic = self.settings[2]
+            self.read_settings()
+            self.set_settings_values()
             self.read_data()
 
             if self.set_automatic and counter >= self.waiting_time:
@@ -48,6 +50,7 @@ class GreenHouse:
                 self.auto()
             elif not self.set_automatic:
                 self.set_settings_values()
+                self.set_settings_devices()
                 counter = 0
 
             self.launch_devices()
@@ -57,9 +60,16 @@ class GreenHouse:
             counter += 1
 
     def plot(self):
-        plt.clf()
-        plt.plot(self.data)
+        x = np.arange(5)
+        # labels = ['temp', 'humi', 'mais', 'o2', 'co2']
+        plt.bar(x - 0.35/2, self.data, 0.35, label='actual')
+        plt.bar(x + 0.35/2, self.desired_values, 0.35, label='desire')
+        plt.ylim(-5, 80)
+        plt.legend()
+
         plt.draw()
+        plt.pause(0.000001)
+        plt.clf()
 
     def auto(self):
         self.set_thermostat = 1 if self.desired_values[0] > self.data[0] else 0
@@ -95,16 +105,20 @@ class GreenHouse:
     def read_desired_values(self):
         self.desired_values = read_desired_values(self.desired_path, self.room)
 
-    def read_settings_values(self):
+    def read_settings(self):
         self.settings = read_settings(self.settings_path)
 
     def set_settings_values(self):
-        self.running, self.room, self.set_automatic, self.set_thermostat, self.set_humidifier,\
-        self.set_sprinklers, self.set_windows = self.settings
+        self.running, self.room, self.set_automatic = self.settings[:3]
+        self.data_path = "room" + str(self.room)
+        self.read_desired_values()
 
+    def set_settings_devices(self):
+        self.set_thermostat, self.set_humidifier, self.set_sprinklers, self.set_windows = self.settings[3:]
 
 # Humidity - gas
 # Moisture - liquid
+
 
 if __name__ == "__main__":
     emulator = GreenHouse()
