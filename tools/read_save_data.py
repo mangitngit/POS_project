@@ -2,6 +2,7 @@ import csv
 
 
 def read_settings(path):
+    """ Load setting data form CSV file """
     # "running, room, auto, thermostat, sprinklers, humidifier, windows"
     data = []
     with open("database/"+path, mode='r', newline='') as file:
@@ -12,6 +13,7 @@ def read_settings(path):
 
 
 def read_desired_values(path, room):
+    """ Load desired values form CSV file """
     # "temperature, soil, air, CO2, O2"
     data = []
     with open("database/"+path, mode='r', newline='') as file:
@@ -22,6 +24,7 @@ def read_desired_values(path, room):
 
 
 def save_mean_values(path, samples, data):
+    """ Write actual data to CSV file """
     # "temperature, soil, air, CO2, O2"
     reader = []
     with open("database/" + path, mode='r', newline='') as file:
