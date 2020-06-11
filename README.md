@@ -15,7 +15,7 @@ Device | Purpose
 HC35_3S | temperature
 humidifier | humidity
 HUNTER | moisture
-windows | CO2, O2
+ventilation | CO2, O2
 
 There is a possibility to check auto setting or manual settings.
 

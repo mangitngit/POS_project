@@ -4,9 +4,10 @@ import matplotlib.pyplot as plt
 
 from tools import alghoritm
 from sensors import RS485, RH_010_GN, LB_856
-from devices import HC35_3S, humidifier, HUNTER, windows
+from devices import HC35_3S, humidifier, HUNTER, ventilation
 from tools.read_save_data import read_settings, read_desired_values, save_mean_values
 
+from prettytable import PrettyTable
 
 class GreenHouse:
     """ Main class of program which contains every need parts """
@@ -18,7 +19,7 @@ class GreenHouse:
         self.set_thermostat = 0
         self.set_humidifier = 0
         self.set_sprinklers = 0
-        self.set_windows = 0
+        self.set_ventilation = 0
 
         self.settings_path = "settings.csv"
         self.desired_path = "rooms_desired_values.csv"
@@ -62,6 +63,7 @@ class GreenHouse:
             save_mean_values(self.save_mean_path, self.samples_size, self.data)  # Save actual data for plotting
 
             self.plot()
+            self.create_html()
             counter += 1
 
     def auto(self):
@@ -69,7 +71,7 @@ class GreenHouse:
         self.set_thermostat = 1 if self.desired_values[0] > self.data[0] else 0
         self.set_humidifier = 1 if self.desired_values[1] > self.data[1] else 0
         self.set_sprinklers = 1 if self.desired_values[2] > self.data[2] else 0
-        self.set_windows = 1 if (self.desired_values[3] > self.data[3] or self.desired_values[4] < self.data[4]) else 0
+        self.set_ventilation = 1 if (self.desired_values[3] > self.data[3] or self.desired_values[4] < self.data[4]) else 0
 
     def launch_devices(self):
         """ Function for emulate a launching devices, get value of change and set that  """
@@ -82,11 +84,11 @@ class GreenHouse:
         self.data[2], moistu = alghoritm.moisture(self.data[2], self.set_sprinklers, 0)
         HUNTER.launch(self.data_path, self.samples_size, moistu)
 
-        self.data[3], o2 = alghoritm.o2(self.data[3], self.set_windows, 0)
-        windows.launch_o2(self.data_path, self.samples_size, o2)
+        self.data[3], o2 = alghoritm.o2(self.data[3], self.set_ventilation, 0)
+        ventilation.launch_o2(self.data_path, self.samples_size, o2)
 
-        self.data[4], co2 = alghoritm.co2(self.data[4], self.set_windows, 0)
-        windows.launch_co2(self.data_path, self.samples_size, co2)
+        self.data[4], co2 = alghoritm.co2(self.data[4], self.set_ventilation, 0)
+        ventilation.launch_co2(self.data_path, self.samples_size, co2)
 
     def read_data(self):
         """ Load data from CSV files """
@@ -114,20 +116,27 @@ class GreenHouse:
 
     def set_settings_devices(self):
         """ Set devices values - on/off """
-        self.set_thermostat, self.set_humidifier, self.set_sprinklers, self.set_windows = self.settings[3:]
+        self.set_thermostat, self.set_humidifier, self.set_sprinklers, self.set_ventilation = self.settings[3:]
 
     def plot(self):
         """ Help function to check the correct operation of the program """
         x = np.arange(5)
         # labels = ['temp', 'humi', 'mais', 'o2', 'co2']
         plt.bar(x - 0.35/2, self.data, 0.35, label='actual')
-        plt.bar(x + 0.35/2, self.desired_values, 0.35, label='desire')
+        plt.bar(x + 0.35/2, self.desired_values, 0.35, label='desired')
         plt.ylim(-5, 80)
         plt.legend()
 
         plt.draw()
         plt.pause(0.000001)
         plt.clf()
+
+    def create_html(self):
+        x = PrettyTable(['Temperature', 'Humidity', 'Moisture', 'O2', 'CO2'])
+        x.add_row([round(x, 3) for x in self.data])
+        html_code = x.get_html_string()
+        html_file = open('table.html', 'w')
+        html_file = html_file.write(html_code)
 
 
 if __name__ == "__main__":
